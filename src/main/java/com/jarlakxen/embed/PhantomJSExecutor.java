@@ -10,50 +10,59 @@ import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
-import org.apache.commons.compress.compressors.CompressorInputStream;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.log4j.Logger;
 
 public class PhantomJSExecutor {
 
+	private static final Logger LOGGER = Logger.getLogger(PhantomJSExecutor.class);
+	
+	public static String PHANTOMJS_NATIVE_CMD = "phantomjs";
 	public static String PHANTOMJS_DATA_FILE = "phantomjs/data.properties";
-	public static String PHANTOMJS_TAR_TMP_FILE = System.getProperty("java.io.tmpdir") +"/" + "phantomjs.tmp.tar";
 	
 	private PhantomJSConfiguration configuration;
 	private String phantomJSExecutablePath;
-	
+
 	public PhantomJSExecutor() {
 		this(new PhantomJSConfiguration());
 	}
-	
+
 	public PhantomJSExecutor(PhantomJSConfiguration configuration) {
 		this.configuration = configuration;
 		phantomJSExecutablePath = getPhantomJSExecutablePath();
 	}
 	
+	public String execute(String sourceFilePath){
+		try {
+			Process process = Runtime.getRuntime().exec(this.phantomJSExecutablePath + " " + sourceFilePath);
+	        process.waitFor();
+	        return IOUtils.toString(process.getInputStream());
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}		
+	}
+
 	private String getPhantomJSExecutablePath(){
 		
 		// Check if phantomjs is installed locally
 		if( configuration.getCheckNativeInstallation() ){
-			try {
-				Process process = Runtime.getRuntime().exec("phantomjs --version");
-		        process.waitFor();
-		        
-		        String processOutput = IOUtils.toString(process.getInputStream());
-
-		        if( PhantomJSVersion.fromValue(processOutput.substring(0, 5)) != null ){
-		        	return "phantomjs";
-		        }
-		        
-			} catch (Exception e) {
-				throw new RuntimeException(e);
+			
+			if(checkPhantomJSInstall(PHANTOMJS_NATIVE_CMD)){
+				return PHANTOMJS_NATIVE_CMD;
 			}
 		}
 		
 		if(!configuration.getVersion().isDownloadSopported()){
 			throw new RuntimeException("Unsopported version for downloading!");
+		}
+		
+		// Check if phantomjs is already installed in target path
+		String targetPath = configuration.getTargetInstallationFolder() + "/phantomjs";
+		if(checkPhantomJSInstall(targetPath)){
+			return targetPath;
 		}
 		
 		// Try download phantomjs
@@ -62,22 +71,22 @@ public class PhantomJSExecutor {
 			Properties properties = new Properties();
 			properties.load(getClass().getClassLoader().getResourceAsStream(PHANTOMJS_DATA_FILE));
 						
-			String os;
+			String osHost;
 			if(configuration.getHostOs().indexOf("linux") >= 0){
-				os = "linux";
+				osHost = "linux";
 			} else if(configuration.getHostOs().indexOf("win") >= 0){
-				os = "win";
+				osHost = "win";
 			} else if(configuration.getHostOs().indexOf("mac") >= 0){
-				os = "macosx";
+				osHost = "macosx";
 			} else {
 				throw new RuntimeException("Unsopported operation system!");
 			}
 			
-			String name = properties.getProperty(configuration.getVersion().getDescription() + "." + os + ".name");
+			String name = properties.getProperty(configuration.getVersion().getDescription() + "." + osHost + ".name");
 			
 			String architecture = configuration.getArchitecture().indexOf("64") >= 0 ? "x86_64" : "i686";
 			
-			if(os.equals("linux")){
+			if(osHost.equals("linux")){
 				name = String.format(name, architecture);
 			}
 			
@@ -86,56 +95,76 @@ public class PhantomJSExecutor {
 			FileUtils.copyURLToFile(downloadPath, phantomJsCompressedFile);
 			
 
-			ArchiveInputStream compressedInputStream = null;
+			ArchiveInputStream archiveInputStream = null;
             
             if(phantomJsCompressedFile.getName().endsWith(".zip")){
             	
-            	compressedInputStream = new ZipArchiveInputStream(new FileInputStream(phantomJsCompressedFile));
+            	archiveInputStream = new ZipArchiveInputStream(new FileInputStream(phantomJsCompressedFile));
             	
             } else if(phantomJsCompressedFile.getName().endsWith(".bz2")){
-            
-            	CompressorInputStream bzIn = new BZip2CompressorInputStream(new FileInputStream(phantomJsCompressedFile));
-
-            	FileOutputStream out = new FileOutputStream(PHANTOMJS_TAR_TMP_FILE);
             	
-            	IOUtils.copy(bzIn, out);
-
-            	bzIn.close();
-            	out.close();
-            	
-            	compressedInputStream = new TarArchiveInputStream(new FileInputStream(PHANTOMJS_TAR_TMP_FILE));
+            	archiveInputStream = new TarArchiveInputStream(new BZip2CompressorInputStream(new FileInputStream(phantomJsCompressedFile)));
             	
             } else if(phantomJsCompressedFile.getName().endsWith(".gz")){
                 
-            	CompressorInputStream bzIn = new GzipCompressorInputStream(new FileInputStream(phantomJsCompressedFile));
-
-            	FileOutputStream out = new FileOutputStream(PHANTOMJS_TAR_TMP_FILE);
+            	archiveInputStream = new TarArchiveInputStream(new GzipCompressorInputStream(new FileInputStream(phantomJsCompressedFile)));
             	
-            	IOUtils.copy(bzIn, out);
-
-            	bzIn.close();
-            	out.close();
-            	
-            	compressedInputStream = new TarArchiveInputStream(new FileInputStream(PHANTOMJS_TAR_TMP_FILE));
             }
             
+            String outputBinaryPath = null;
+            
 			ArchiveEntry entry;
-			while ((entry = compressedInputStream.getNextEntry()) != null) {
+			while ((entry = archiveInputStream.getNextEntry()) != null) {
 				if(entry.getName().endsWith("/bin/phantomjs")){
-					entry.
-					
+
+					 // Create target folder
+					 new File(configuration.getTargetInstallationFolder()).mkdirs();
+					 
+					 // Create empty binary file
+					 File output = new File(configuration.getTargetInstallationFolder()+ "/phantomjs");
+					 if(!output.exists()){
+						 output.createNewFile();
+						 output.setExecutable(true);
+						 output.setReadable(true);
+					 }
+					 
+					 // Untar the binary file
+					 FileOutputStream outputBinary = new FileOutputStream(output);
+					 
+					 IOUtils.copy(archiveInputStream, outputBinary);
+					 
+					 outputBinary.close();
+					 
+					 outputBinaryPath = output.getAbsolutePath();
 				}
 			}
             
-            compressedInputStream.close();
+            archiveInputStream.close();
+
+            return outputBinaryPath;
             
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		
-		return "";
 	}
-	
+
+	private Boolean checkPhantomJSInstall(String path) {
+		try {
+			Process process = Runtime.getRuntime().exec(path + " --version");
+			process.waitFor();
+
+			String processOutput = IOUtils.toString(process.getInputStream());
+
+			if (PhantomJSVersion.fromValue(processOutput.substring(0, 5)) != null) {
+				return true;
+			}
+		} catch (Exception e) {
+			LOGGER.warn(e);
+		}
+
+		return false;
+	}
+
 	public PhantomJSConfiguration getConfiguration() {
 		return configuration;
 	}

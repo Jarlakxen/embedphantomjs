@@ -10,7 +10,7 @@ public class PhantomJSConfiguration {
 	
 	private String downloadUrl = "http://phantomjs.googlecode.com/files/";
 	private String downloadExtension = "tar.bz2";
-	private String targetDownloadFolder = System.getProperty("java.io.tmpdir") + "/./embedphantomjs";
+	private String targetInstallationFolder = System.getProperty("user.home") + "/.embedphantomjs";
 	
 	private boolean checkNativeInstallation = true;
 
@@ -58,13 +58,13 @@ public class PhantomJSConfiguration {
 		this.downloadExtension = downloadExtension;
 		return this;
 	}
-
-	public String getTargetDownloadFolder() {
-		return targetDownloadFolder;
+	
+	public String getTargetInstallationFolder() {
+		return targetInstallationFolder;
 	}
-
-	public PhantomJSConfiguration setTargetDownloadFolder(String targetDownloadFolder) {
-		this.targetDownloadFolder = targetDownloadFolder;
+	
+	public PhantomJSConfiguration setTargetInstallationFolder(String targetInstallationFolder) {
+		this.targetInstallationFolder = targetInstallationFolder;
 		return this;
 	}
 
