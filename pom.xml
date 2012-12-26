@@ -106,14 +106,14 @@
 				<artifactId>maven-license-plugin</artifactId>
 				<version>1.9.0</version>
 				<configuration>
-					<header>${basedir}/src/main/resources/etc/header.txt</header>
+					<header>${basedir}/src/main/resources/etc/license.txt</header>
 					<quiet>false</quiet>
 					<failIfMissing>true</failIfMissing>
 					<strictCheck>true</strictCheck>
-					<aggregate>false</aggregate>
+					<aggregate>true</aggregate>
 					<includes>
-						<include>src/**</include>
-						<include>**/test/**</include>
+						<include>src/**/*.java</include>
+						<include>**/test/**/*.java</include>
 					</includes>
 
 					<properties>
