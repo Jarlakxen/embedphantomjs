@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jarlakxen.embed;
+package com.despegar.embed;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +28,8 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.jarlakxen.embed.PhantomJSExecutor;
+import com.despegar.embed.PhantomJSConfiguration;
+import com.despegar.embed.PhantomJSExecutor;
 
 public class PhantomJSExecutorTest {
 
