@@ -10,14 +10,16 @@ Embedded PhantomJS for Java
 Stable (Maven Central Repository, Released: dd.mm.aaaa - wait 24hrs for [maven central](http://repo1.maven.org/maven2/com/jarlakxen/embed/embedphantomjs/maven-metadata.xml))
 
 	<dependency>
-		<groupId>com.jarlakxen.embed</groupId>
+		<groupId>com.github.jarlakxen</groupId>
 		<artifactId>embedphantomjs</artifactId>
-		<version>1.3</version>
+		<version>2.0</version>
 	</dependency>
 
 ### Changelog
 
-1.4 ( SNAPSHOT )
+2.0 
+- Sopport for versions 1.9.2, 1.9.1, 1.9.0, 1.8.2, 1.8.1, 1.8.0
+- Sopport binary versioned
 
 1.3
 - Full support for input stream script

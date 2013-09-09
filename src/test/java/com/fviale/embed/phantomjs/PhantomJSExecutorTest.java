@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jarlakxen.embed;
+package com.fviale.embed.phantomjs;
 
 import static org.junit.Assert.assertEquals;
 
@@ -29,8 +29,8 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.jarlakxen.embed.PhantomJSConfiguration;
-import com.jarlakxen.embed.PhantomJSExecutor;
+import com.fviale.embed.phantomjs.Configuration;
+import com.fviale.embed.phantomjs.PhantomJSExecutor;
 
 public class PhantomJSExecutorTest {
 
@@ -51,13 +51,13 @@ public class PhantomJSExecutorTest {
 
     @Test
     public void testWithFile() {
-        PhantomJSExecutor ex = new PhantomJSExecutor(new PhantomJSConfiguration().setCheckNativeInstallation(false));
+        PhantomJSExecutor ex = new PhantomJSExecutor(new Configuration().setCheckNativeInstallation(false));
         assertEquals("TEST1\n", ex.execute(test1));
     }
 
     @Test
     public void testWithString() {
-        PhantomJSExecutor ex = new PhantomJSExecutor(new PhantomJSConfiguration().setCheckNativeInstallation(false));
+        PhantomJSExecutor ex = new PhantomJSExecutor(new Configuration().setCheckNativeInstallation(false));
         assertEquals("TEST1\n", ex.execute(DEFAULT_TEST_JS));
     }
 }
