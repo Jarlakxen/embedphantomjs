@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.fviale.embed.phantomjs;
+package com.github.jarlakxen.embedphantomjs;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,6 +25,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
@@ -37,6 +39,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
+import com.github.jarlakxen.embedphantomjs.Configuration.ConfigurationBuilder;
+
 public class PhantomJSExecutor {
 
 	private static final Logger LOGGER = Logger.getLogger(PhantomJSExecutor.class);
@@ -46,39 +50,72 @@ public class PhantomJSExecutor {
 	public static final String PHANTOMJS_NATIVE_CMD = "phantomjs";
 	public static final String PHANTOMJS_DATA_FILE = "phantomjs/data.properties";
 
+
 	private Configuration configuration;
 	private String phantomJSExecutablePath;
 
 	public PhantomJSExecutor() {
-		this(new Configuration());
+		this(Configuration.create().build());
 	}
 
+	public PhantomJSExecutor(ConfigurationBuilder builder) {
+		this(builder.build());
+	}
+	
 	public PhantomJSExecutor(Configuration configuration) {
 		this.configuration = configuration;
 		this.phantomJSExecutablePath = this.getPhantomJSExecutablePath();
 	}
 
-	public String execute(File sourceFile, String... args) {
+	public Future<String> asyncExecute(final File sourceFile, final String... args) {
+		return configuration.getExecutor().submit(new Callable<String>() {
+			@Override
+			public String call() throws Exception {
+				return execute(sourceFile, args);
+			}
+		});
+	}
+	
+	public Future<String> asyncExecute(final String source) {
+		return configuration.getExecutor().submit(new Callable<String>() {
+			@Override
+			public String call() throws Exception {
+				return execute(source);
+			}
+		});
+	}
+	
+	public Future<String> asyncExecute(final InputStream sourceInputStream) {
+		return configuration.getExecutor().submit(new Callable<String>() {
+			@Override
+			public String call() throws Exception {
+				return execute(sourceInputStream);
+			}
+		});
+	}
+	
+	public String execute(final File sourceFile, final String... args) {
 		try {
 			String cmd = this.phantomJSExecutablePath + " " + sourceFile.getAbsolutePath() + " " + StringUtils.join(args, " ");
-			LOGGER.debug("Command to execute: " + cmd);
+			LOGGER.info("Command to execute: " + cmd);
 			Process process = Runtime.getRuntime().exec(cmd);
 			String output = IOUtils.toString(process.getInputStream());
 			process.waitFor();
+			LOGGER.debug("Command " + cmd + " output:" + output);
 			return output;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	public String execute(String source) {
-		return this.execute(IOUtils.toInputStream(source));
+	public String execute(final String scriptSource) {
+		return this.execute(IOUtils.toInputStream(scriptSource));
 	}
 
-	public String execute(InputStream sourceInputStream) {
+	public String execute(final InputStream scriptSourceInputStream) {
 		try {
 			Process process = Runtime.getRuntime().exec(this.phantomJSExecutablePath);
-			IOUtils.copy(sourceInputStream, process.getOutputStream());
+			IOUtils.copy(scriptSourceInputStream, process.getOutputStream());
 			process.getOutputStream().close();
 			String output = IOUtils.toString(process.getInputStream());
 			process.waitFor();
@@ -95,6 +132,8 @@ public class PhantomJSExecutor {
 				output = output.substring(0, output.length() - PHANTOMJS_CONSOLE_POSTFIX.length());
 			}
 
+			LOGGER.debug("Program output: " + output);
+			
 			return output;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -106,7 +145,7 @@ public class PhantomJSExecutor {
 		// Check if phantomjs is installed locally
 		if (this.configuration.getCheckNativeInstallation()) {
 			LOGGER.debug("Checking PhantomJS native installation");
-			if (this.checkPhantomJSInstall(PHANTOMJS_NATIVE_CMD)) {
+			if (this.checkPhantomJSBinary(PHANTOMJS_NATIVE_CMD)) {
 				LOGGER.debug("Native installation founded");
 				return PHANTOMJS_NATIVE_CMD;
 			}
@@ -120,7 +159,7 @@ public class PhantomJSExecutor {
 		String targetPath = this.configuration.getTargetInstallationFolder() + "/" + this.configuration.getVersion().getDescription()
 				+ "/phantomjs";
 		LOGGER.debug("Checking PhantomJS installation in " + targetPath);
-		if (this.checkPhantomJSInstall(targetPath)) {
+		if (this.checkPhantomJSBinary(targetPath)) {
 			LOGGER.debug("PhantomJS founded in " + targetPath);
 			return targetPath;
 		}
@@ -208,7 +247,7 @@ public class PhantomJSExecutor {
 		}
 	}
 
-	private Boolean checkPhantomJSInstall(String path) {
+	private Boolean checkPhantomJSBinary(String path) {
 		try {
 			Process process = Runtime.getRuntime().exec(path + " --version");
 			process.waitFor();

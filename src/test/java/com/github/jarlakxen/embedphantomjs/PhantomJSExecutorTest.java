@@ -17,20 +17,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.fviale.embed.phantomjs;
+package com.github.jarlakxen.embedphantomjs;
 
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.fviale.embed.phantomjs.Configuration;
-import com.fviale.embed.phantomjs.PhantomJSExecutor;
+import com.github.jarlakxen.embedphantomjs.Configuration;
+import com.github.jarlakxen.embedphantomjs.PhantomJSExecutor;
 
 public class PhantomJSExecutorTest {
 
@@ -50,14 +51,20 @@ public class PhantomJSExecutorTest {
     }
 
     @Test
-    public void testWithFile() {
-        PhantomJSExecutor ex = new PhantomJSExecutor(new Configuration().setCheckNativeInstallation(false));
+    public void test_FromFile() {
+        PhantomJSExecutor ex = new PhantomJSExecutor(Configuration.create().useNativeInstallation(false));
         assertEquals("TEST1\n", ex.execute(test1));
     }
 
     @Test
-    public void testWithString() {
-        PhantomJSExecutor ex = new PhantomJSExecutor(new Configuration().setCheckNativeInstallation(false));
+    public void test_FromString() {
+        PhantomJSExecutor ex = new PhantomJSExecutor(Configuration.create().useNativeInstallation(false));
         assertEquals("TEST1\n", ex.execute(DEFAULT_TEST_JS));
+    }
+    
+    @Test
+    public void testAsync_FromString() throws InterruptedException, ExecutionException {
+        PhantomJSExecutor ex = new PhantomJSExecutor(Configuration.create().useNativeInstallation(false));
+        assertEquals("TEST1\n", ex.asyncExecute(DEFAULT_TEST_JS).get());
     }
 }

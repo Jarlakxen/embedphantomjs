@@ -17,7 +17,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.fviale.embed.phantomjs;
+package com.github.jarlakxen.embedphantomjs;
 
 public enum Version {
 	v_1_9_2("1.9.2", true), v_1_9_1("1.9.1", true), v_1_9_0("1.9.0", true), v_1_8_2("1.8.2", true), v_1_8_1("1.8.1", true), v_1_8_0(
