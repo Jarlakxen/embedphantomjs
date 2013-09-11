@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.jarlakxen</groupId>
 	<artifactId>embedphantomjs</artifactId>
-	<version>2.2-SNAPSHOT</version>
+	<version>2.2</version>
 	<name>EmbedPhantomJS </name>
 
 	<description>Embedded PhantomJS for Java</description>
