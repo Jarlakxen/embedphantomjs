@@ -24,25 +24,32 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.github.jarlakxen.embedphantomjs.Configuration;
-import com.github.jarlakxen.embedphantomjs.PhantomJSExecutor;
+import com.github.jarlakxen.embedphantomjs.executor.PhantomJSAsyncFileExecutor;
+import com.github.jarlakxen.embedphantomjs.executor.PhantomJSConsoleExecutor;
+import com.github.jarlakxen.embedphantomjs.executor.PhantomJSFileExecutor;
+import com.github.jarlakxen.embedphantomjs.executor.PhantomJSSyncFileExecutor;
 
 public class PhantomJSExecutorTest {
 
-    private static String DEFAULT_TEST_JS = "console.log('TEST1');phantom.exit();";
-
+    private static String DEFAULT_FILE_JS = "console.log('TEST1');phantom.exit();";
+	
+    private static String DEFAULT_CONSOLE_BOOTSTRAP = "var system = require('system');system.stdout.writeLine('TEST1');";
+    
+	private static String DEFAULT_CONSOLE_JS = "system.stdout.writeLine('TEST1');";
+			
     private static File test1 = new File(System.getProperty("java.io.tmpdir") + "/embedphantomjs.test1.js");
 
     @BeforeClass
     public static void setUpClass() throws IOException {
         test1.createNewFile();
-        FileUtils.write(test1, DEFAULT_TEST_JS);
+        FileUtils.write(test1, DEFAULT_FILE_JS);
     }
 
     @AfterClass
@@ -51,20 +58,24 @@ public class PhantomJSExecutorTest {
     }
 
     @Test
-    public void test_FromFile() {
-        PhantomJSExecutor ex = new PhantomJSExecutor(Configuration.create().useNativeInstallation(false));
+    public void test_SyncExecutor_FromFile() {
+    	PhantomJSFileExecutor<String> ex = new PhantomJSSyncFileExecutor(PhantomJSReference.create().build());
         assertEquals("TEST1\n", ex.execute(test1));
-    }
-
-    @Test
-    public void test_FromString() {
-        PhantomJSExecutor ex = new PhantomJSExecutor(Configuration.create().useNativeInstallation(false));
-        assertEquals("TEST1\n", ex.execute(DEFAULT_TEST_JS));
     }
     
     @Test
-    public void testAsync_FromString() throws InterruptedException, ExecutionException {
-        PhantomJSExecutor ex = new PhantomJSExecutor(Configuration.create().useNativeInstallation(false));
-        assertEquals("TEST1\n", ex.asyncExecute(DEFAULT_TEST_JS).get());
+    public void test_AsyncExecutor_FromFile() throws InterruptedException, ExecutionException {
+    	PhantomJSFileExecutor<Future<String>> ex = new PhantomJSAsyncFileExecutor(PhantomJSReference.create().build());
+        assertEquals("TEST1\n", ex.execute(test1).get());
+    }
+    
+    @Test
+    public void test_executor_FromConsole() {
+    	PhantomJSConsoleExecutor ex = new PhantomJSConsoleExecutor(PhantomJSReference.create().build());
+    	ex.start();
+    	ex.execute(DEFAULT_CONSOLE_BOOTSTRAP);
+        assertEquals("TEST1\n", ex.execute(DEFAULT_CONSOLE_JS));
+        assertEquals("TEST1\n", ex.execute(DEFAULT_CONSOLE_JS));
+        ex.destroy();
     }
 }
