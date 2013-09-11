@@ -17,10 +17,14 @@ Stable [OSS Sonatype](https://oss.sonatype.org/content/repositories/releases/com
 	<dependency>
 		<groupId>com.github.jarlakxen</groupId>
 		<artifactId>embedphantomjs</artifactId>
-		<version>2.1</version>
+		<version>2.2</version>
 	</dependency>
 
 ### Changelog
+
+2.2 
+- Mejor API Refactor
+- Now supports console style executor
 
 2.1 
 - Add asyncronic execution
@@ -55,14 +59,31 @@ Support for Linux, Windows and MacOSX.
 
 ### Usage
 
-	Configuration configuration = Configuration.create().useNativeInstallation(false).build();
-	
-	PhantomJSExecutor executor = new PhantomJSExecutor(configuration);
+####Example I:
 
+	PhantomJSFileExecutor<String> ex = new PhantomJSSyncFileExecutor(PhantomJSReference.create().build());
 	String output = executor.execute(new File("~/scrapper.js"));
-
-	or
-
-	String output = executor.execute("console.log('TEST1');phantom.exit();")
-
 	System.out.println(output);  // This prints "TEST1"
+
+
+####Example II:
+
+	PhantomJSFileExecutor<String> ex = new PhantomJSSyncFileExecutor(PhantomJSReference.create().build());
+	String output = executor.execute("console.log('TEST1');phantom.exit();")
+	System.out.println(output);  // This prints "TEST1"
+
+
+####Example III:
+
+	PhantomJSFileExecutor<Future<String>> ex = new PhantomJSAsyncFileExecutor(PhantomJSReference.create().build());
+	String output = executor.execute("console.log('TEST1');phantom.exit();").get()
+	System.out.println(output);  // This prints "TEST1"
+
+####Example IV:
+
+	PhantomJSConsoleExecutor ex = new PhantomJSConsoleExecutor(PhantomJSReference.create().build());
+	ex.start();
+	ex.execute("var system = require('system');");
+    System.out.println(ex.execute("system.stdout.writeLine('TEST1');")); // This prints "TEST1"
+    System.out.println( ex.execute("system.stdout.writeLine('TEST2');")); // This prints "TEST2"
+    ex.destroy();

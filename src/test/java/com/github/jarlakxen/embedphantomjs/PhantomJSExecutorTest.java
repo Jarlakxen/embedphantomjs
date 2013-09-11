@@ -40,7 +40,7 @@ public class PhantomJSExecutorTest {
 
     private static String DEFAULT_FILE_JS = "console.log('TEST1');phantom.exit();";
 	
-    private static String DEFAULT_CONSOLE_BOOTSTRAP = "var system = require('system');system.stdout.writeLine('TEST1');";
+    private static String DEFAULT_CONSOLE_BOOTSTRAP = "var system = require('system');";
     
 	private static String DEFAULT_CONSOLE_JS = "system.stdout.writeLine('TEST1');";
 			
