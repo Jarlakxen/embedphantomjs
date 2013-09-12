@@ -74,8 +74,8 @@ public class PhantomJSExecutorTest {
     	PhantomJSConsoleExecutor ex = new PhantomJSConsoleExecutor(PhantomJSReference.create().build());
     	ex.start();
     	ex.execute(DEFAULT_CONSOLE_BOOTSTRAP);
-        assertEquals("TEST1\n", ex.execute(DEFAULT_CONSOLE_JS));
-        assertEquals("TEST1\n", ex.execute(DEFAULT_CONSOLE_JS));
+        assertEquals("TEST1", ex.execute(DEFAULT_CONSOLE_JS));
+        assertEquals("TEST1", ex.execute(DEFAULT_CONSOLE_JS));
         ex.destroy();
     }
 }

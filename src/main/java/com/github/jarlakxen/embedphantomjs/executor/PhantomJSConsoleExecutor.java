@@ -50,6 +50,7 @@ public class PhantomJSConsoleExecutor {
 	public void start() {
 		try {
 			process = Runtime.getRuntime().exec(this.phantomReference.getBinaryPath());
+			process.getInputStream().read(new byte[PHANTOMJS_CONSOLE_PREFIX.length()]);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
@@ -75,7 +76,7 @@ public class PhantomJSConsoleExecutor {
 		return this.execute(scriptSourceInputStream, asList(endLines));
 	}
 	
-	public String execute(final InputStream scriptSourceInputStream, List<String> endLines) {
+	public synchronized String execute(final InputStream scriptSourceInputStream, List<String> endLines) {
 		try {
 			IOUtils.copy(scriptSourceInputStream, process.getOutputStream());
 			// Append Enter to the input
@@ -101,17 +102,20 @@ public class PhantomJSConsoleExecutor {
 		final StringBuilder out = new StringBuilder();
 
 		BufferedReader in = new BufferedReader(new InputStreamReader(processInput, "UTF-8"));
-		
-		in.skip(PHANTOMJS_CONSOLE_PREFIX.length());
 
 		while (true) {
 			String line = in.readLine();
 
 			if (line == null || endLines.contains(line)) {
+				in.skip(PHANTOMJS_CONSOLE_PREFIX.length());
 				break;
 			}
 
-			out.append(line + "\n");
+			if(out.length() > 0){
+				out.append("\n");
+			}
+			
+			out.append(line);
 		}
 
 		return out.toString();
