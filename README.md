@@ -17,10 +17,13 @@ Stable [OSS Sonatype](https://oss.sonatype.org/content/repositories/releases/com
 	<dependency>
 		<groupId>com.github.jarlakxen</groupId>
 		<artifactId>embedphantomjs</artifactId>
-		<version>2.2</version>
+		<version>2.3</version>
 	</dependency>
 
 ### Changelog
+
+2.3
+- Bug fixing
 
 2.2 
 - Mejor API Refactor
