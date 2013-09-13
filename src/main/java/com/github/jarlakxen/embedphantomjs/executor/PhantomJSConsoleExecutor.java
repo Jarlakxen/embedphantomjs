@@ -25,17 +25,19 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import com.github.jarlakxen.embedphantomjs.PhantomJSReference;
+import com.github.jarlakxen.embedphantomjs.exception.UnexpectedProcessEndException;
 
 public class PhantomJSConsoleExecutor {
 
 	private static final Logger LOGGER = Logger.getLogger(PhantomJSConsoleExecutor.class);
-	
+
 	private static final char SYSTEM_NEWLINE[] = System.getProperty("line.separator").toString().toCharArray();
 	private static final String PHANTOMJS_CONSOLE_PREFIX = "phantomjs> ";
 	private static final List<String> PHANTOMJS_CONSOLE_POSTFIXS = asList("{}", "undefined");
@@ -47,6 +49,29 @@ public class PhantomJSConsoleExecutor {
 		this.phantomReference = phantomReference;
 	}
 
+	public int getPid() {
+		if (process.getClass().getName().equals("java.lang.UNIXProcess")) {
+			/* get the PID on unix/linux systems */
+			try {
+				Field f = process.getClass().getDeclaredField("pid");
+				f.setAccessible(true);
+				return f.getInt(process);
+			} catch (Throwable e) {
+			}
+		}
+
+		return -1;
+	}
+
+	public boolean isAlive() {
+		try {
+			process.exitValue();
+			return false;
+		} catch (IllegalThreadStateException ex) {
+			return true;
+		}
+	}
+
 	public void start() {
 		try {
 			process = Runtime.getRuntime().exec(this.phantomReference.getBinaryPath());
@@ -56,32 +81,47 @@ public class PhantomJSConsoleExecutor {
 		}
 	}
 
-	public void destroy() {
+	public int destroy() {
 		try {
 			process.destroy();
 		} catch (Exception e) {
-			throw new RuntimeException(e);
 		}
+
+		if (isAlive()) {
+			try {
+				return process.waitFor();
+			} catch (InterruptedException e) {
+
+			}
+		}
+
+		return process.exitValue();
 	}
 
-	public String execute(final String scriptSource) {
+	public String execute(final String scriptSource) throws UnexpectedProcessEndException {
 		return this.execute(IOUtils.toInputStream(scriptSource), PHANTOMJS_CONSOLE_POSTFIXS);
 	}
-	
-	public String execute(final String scriptSource, String ... endLines) {
+
+	public String execute(final String scriptSource, String... endLines) throws UnexpectedProcessEndException {
 		return this.execute(IOUtils.toInputStream(scriptSource), asList(endLines));
 	}
 
-	public String execute(final InputStream scriptSourceInputStream, String ... endLines) {
+	public String execute(final InputStream scriptSourceInputStream, String... endLines) throws UnexpectedProcessEndException {
 		return this.execute(scriptSourceInputStream, asList(endLines));
 	}
-	
-	public synchronized String execute(final InputStream scriptSourceInputStream, List<String> endLines) {
+
+	public synchronized String execute(final InputStream scriptSourceInputStream, List<String> endLines)
+			throws UnexpectedProcessEndException {
+
+		if (!isAlive()) {
+			throw new UnexpectedProcessEndException();
+		}
+
 		try {
 			IOUtils.copy(scriptSourceInputStream, process.getOutputStream());
 			// Append Enter to the input
-			
-			for(char c : SYSTEM_NEWLINE){
+
+			for (char c : SYSTEM_NEWLINE) {
 				process.getOutputStream().write(c);
 			}
 
@@ -92,8 +132,8 @@ public class PhantomJSConsoleExecutor {
 			LOGGER.debug("Program output: " + output);
 
 			return output;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+		} catch (IOException e) {
+			throw new UnexpectedProcessEndException(e);
 		}
 	}
 
@@ -111,10 +151,10 @@ public class PhantomJSConsoleExecutor {
 				break;
 			}
 
-			if(out.length() > 0){
+			if (out.length() > 0) {
 				out.append("\n");
 			}
-			
+
 			out.append(line);
 		}
 

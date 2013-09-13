@@ -31,6 +31,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.github.jarlakxen.embedphantomjs.exception.UnexpectedProcessEndException;
 import com.github.jarlakxen.embedphantomjs.executor.PhantomJSAsyncFileExecutor;
 import com.github.jarlakxen.embedphantomjs.executor.PhantomJSConsoleExecutor;
 import com.github.jarlakxen.embedphantomjs.executor.PhantomJSFileExecutor;
@@ -70,7 +71,7 @@ public class PhantomJSExecutorTest {
     }
     
     @Test
-    public void test_executor_FromConsole() {
+    public void test_executor_FromConsole() throws UnexpectedProcessEndException {
     	PhantomJSConsoleExecutor ex = new PhantomJSConsoleExecutor(PhantomJSReference.create().build());
     	ex.start();
     	ex.execute(DEFAULT_CONSOLE_BOOTSTRAP);
