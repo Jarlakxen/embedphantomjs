@@ -17,10 +17,13 @@ Stable [OSS Sonatype](https://oss.sonatype.org/content/repositories/releases/com
 	<dependency>
 		<groupId>com.github.jarlakxen</groupId>
 		<artifactId>embedphantomjs</artifactId>
-		<version>2.4</version>
+		<version>2.5</version>
 	</dependency>
 
 ### Changelog
+
+2.5
+- Some API improvments
 
 2.4
 - Provide some basic information of the PhantomJS process
