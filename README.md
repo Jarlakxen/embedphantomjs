@@ -97,3 +97,5 @@ Support for Linux, Windows and MacOSX.
     System.out.println(ex.execute("system.stdout.writeLine('TEST1');")); // This prints "TEST1"
     System.out.println( ex.execute("system.stdout.writeLine('TEST2');")); // This prints "TEST2"
     ex.destroy();
+    
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/Jarlakxen/embedphantomjs/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
