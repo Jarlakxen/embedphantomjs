@@ -22,6 +22,10 @@ Stable [OSS Sonatype](https://oss.sonatype.org/content/repositories/releases/com
 
 ### Changelog
 
+2.6
+- Some API improvments in PhantomJSFileExecutor
+- Improve the core of the PhantomJSConsoleExecutor
+
 2.5
 - Some API improvments
 

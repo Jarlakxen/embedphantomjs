@@ -30,6 +30,8 @@ import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +39,9 @@ import org.apache.log4j.Logger;
 
 import com.github.jarlakxen.embedphantomjs.PhantomJSReference;
 import com.github.jarlakxen.embedphantomjs.exception.UnexpectedProcessEndException;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 public class PhantomJSConsoleExecutor {
 
@@ -51,6 +56,7 @@ public class PhantomJSConsoleExecutor {
 	private static final List<String> DEFAULT_PHANTOMJS_CONSOLE_POSTFIXS = asList("{}", "undefined");
 	private static final String PHANTOMJS_PARSER_ERROR_PREFIX = "Parse error";
 
+	private ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
 	private PhantomJSReference phantomReference;
 	private File scriptFile;
 	private String scriptArgs[];
@@ -131,19 +137,29 @@ public class PhantomJSConsoleExecutor {
 		return process.exitValue();
 	}
 
-	public String execute(final String scriptSource) throws UnexpectedProcessEndException {
+	public ListenableFuture<String> execute(final String scriptSource) throws UnexpectedProcessEndException {
 		return this.execute(IOUtils.toInputStream(scriptSource), consolePostfix);
 	}
 
-	public String execute(final String scriptSource, String... endLines) throws UnexpectedProcessEndException {
+	public ListenableFuture<String> execute(final String scriptSource, String... endLines) throws UnexpectedProcessEndException {
 		return this.execute(IOUtils.toInputStream(scriptSource), asList(endLines));
 	}
 
-	public String execute(final InputStream scriptSourceInputStream, String... endLines) throws UnexpectedProcessEndException {
+	public ListenableFuture<String> execute(final InputStream scriptSourceInputStream, String... endLines) throws UnexpectedProcessEndException {
 		return this.execute(scriptSourceInputStream, asList(endLines));
 	}
 
-	public synchronized String execute(final InputStream scriptSourceInputStream, List<String> endLines)
+	public ListenableFuture<String> execute(final InputStream scriptSourceInputStream, final List<String> endLines)
+			throws UnexpectedProcessEndException {
+		return executorService.submit(new Callable<String>() {
+			@Override
+			public String call() throws Exception {
+				return doExecute(scriptSourceInputStream, endLines);
+			}
+		});
+	}
+	
+	private String doExecute(final InputStream scriptSourceInputStream, List<String> endLines)
 			throws UnexpectedProcessEndException {
 
 		if (!isAlive()) {

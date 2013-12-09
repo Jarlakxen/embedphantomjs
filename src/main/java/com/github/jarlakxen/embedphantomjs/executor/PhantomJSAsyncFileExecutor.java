@@ -23,25 +23,27 @@ import java.io.File;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import com.github.jarlakxen.embedphantomjs.PhantomJSReference;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
-public class PhantomJSAsyncFileExecutor extends PhantomJSFileExecutor<Future<String>> {
+public class PhantomJSAsyncFileExecutor extends PhantomJSFileExecutor<ListenableFuture<String>> {
 
-	private ExecutorService executorService;
+	private ListeningExecutorService executorService;
 	
 	public PhantomJSAsyncFileExecutor(PhantomJSReference phantomReference){
-		this(phantomReference, Executors.newSingleThreadExecutor());
+		this(phantomReference, Executors.newCachedThreadPool());
 	}
 	
 	public PhantomJSAsyncFileExecutor(PhantomJSReference phantomReference, ExecutorService executorService) {
 		super(phantomReference);
-		this.executorService = executorService;
+		this.executorService = MoreExecutors.listeningDecorator(executorService);
 	}
 
 	@Override
-	public Future<String> execute(final File sourceFile, final String... args) {
+	public ListenableFuture<String> execute(final File sourceFile, final String... args) {
 		return executorService.submit(new Callable<String>() {
 			@Override
 			public String call() throws Exception {

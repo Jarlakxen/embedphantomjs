@@ -59,24 +59,30 @@ public class PhantomJSExecutorTest {
     }
 
     @Test
-    public void test_SyncExecutor_FromFile() {
-    	PhantomJSFileExecutor<String> ex = new PhantomJSSyncFileExecutor(PhantomJSReference.create().build());
+    public void test_SyncExecutor_FromString() {
+    	PhantomJSSyncFileExecutor ex = new PhantomJSSyncFileExecutor(PhantomJSReference.create().build());
         assertEquals("TEST1\n", ex.execute(test1));
     }
     
     @Test
+    public void test_SyncExecutor_FromFile() {
+    	PhantomJSSyncFileExecutor ex = new PhantomJSSyncFileExecutor(PhantomJSReference.create().build());
+        assertEquals("TEST1\n", ex.execute(DEFAULT_FILE_JS));
+    }
+    
+    @Test
     public void test_AsyncExecutor_FromFile() throws InterruptedException, ExecutionException {
-    	PhantomJSFileExecutor<Future<String>> ex = new PhantomJSAsyncFileExecutor(PhantomJSReference.create().build());
+    	PhantomJSAsyncFileExecutor ex = new PhantomJSAsyncFileExecutor(PhantomJSReference.create().build());
         assertEquals("TEST1\n", ex.execute(test1).get());
     }
     
     @Test
-    public void test_executor_FromConsole() throws UnexpectedProcessEndException {
+    public void test_executor_FromConsole() throws UnexpectedProcessEndException, InterruptedException, ExecutionException {
     	PhantomJSConsoleExecutor ex = new PhantomJSConsoleExecutor(PhantomJSReference.create().build());
     	ex.start();
     	ex.execute(DEFAULT_CONSOLE_BOOTSTRAP);
-        assertEquals("TEST1", ex.execute(DEFAULT_CONSOLE_JS));
-        assertEquals("TEST1", ex.execute(DEFAULT_CONSOLE_JS));
+        assertEquals("TEST1", ex.execute(DEFAULT_CONSOLE_JS).get());
+        assertEquals("TEST1", ex.execute(DEFAULT_CONSOLE_JS).get());
         ex.destroy();
     }
 }
