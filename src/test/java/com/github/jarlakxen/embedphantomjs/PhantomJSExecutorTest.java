@@ -24,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.AfterClass;
@@ -32,10 +32,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.github.jarlakxen.embedphantomjs.exception.UnexpectedProcessEndException;
-import com.github.jarlakxen.embedphantomjs.executor.PhantomJSAsyncFileExecutor;
 import com.github.jarlakxen.embedphantomjs.executor.PhantomJSConsoleExecutor;
 import com.github.jarlakxen.embedphantomjs.executor.PhantomJSFileExecutor;
-import com.github.jarlakxen.embedphantomjs.executor.PhantomJSSyncFileExecutor;
+import com.google.common.util.concurrent.ListenableFuture;
 
 public class PhantomJSExecutorTest {
 
@@ -57,23 +56,25 @@ public class PhantomJSExecutorTest {
     public static void tearDownClass() throws IOException {
         test1.delete();
     }
-
+    
     @Test
-    public void test_SyncExecutor_FromString() {
-    	PhantomJSSyncFileExecutor ex = new PhantomJSSyncFileExecutor(PhantomJSReference.create().build());
-        assertEquals("TEST1\n", ex.execute(test1));
+    public void test_FileExecutor_FromString() throws InterruptedException, ExecutionException {
+    	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(PhantomJSReference.create().build(), new ExecutionTimeout(1, TimeUnit.SECONDS));
+        assertEquals("TEST1\n", ex.execute(DEFAULT_FILE_JS).get());
     }
     
     @Test
-    public void test_SyncExecutor_FromFile() {
-    	PhantomJSSyncFileExecutor ex = new PhantomJSSyncFileExecutor(PhantomJSReference.create().build());
-        assertEquals("TEST1\n", ex.execute(DEFAULT_FILE_JS));
-    }
-    
-    @Test
-    public void test_AsyncExecutor_FromFile() throws InterruptedException, ExecutionException {
-    	PhantomJSAsyncFileExecutor ex = new PhantomJSAsyncFileExecutor(PhantomJSReference.create().build());
+    public void test__FileExecutor_FromFile() throws InterruptedException, ExecutionException {
+    	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(PhantomJSReference.create().build(), new ExecutionTimeout(1, TimeUnit.SECONDS));
         assertEquals("TEST1\n", ex.execute(test1).get());
+    }
+    
+    @Test
+    public void test_FileExecutor_FromString_Timeout() throws InterruptedException, ExecutionException {
+    	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(PhantomJSReference.create().build(), new ExecutionTimeout(100, TimeUnit.MILLISECONDS));
+    	ListenableFuture<String> result = ex.execute("while(true){};");
+    	Thread.sleep(200);
+    	assertEquals(true,result.isCancelled());
     }
     
     @Test

@@ -17,10 +17,14 @@ Stable [OSS Sonatype](https://oss.sonatype.org/content/repositories/releases/com
 	<dependency>
 		<groupId>com.github.jarlakxen</groupId>
 		<artifactId>embedphantomjs</artifactId>
-		<version>2.5</version>
+		<version>2.7</version>
 	</dependency>
 
 ### Changelog
+
+2.7
+- Unify Sync and Async interfaces for PhantomJSFileExecutor
+- Improve error handling
 
 2.6
 - Some API improvments in PhantomJSFileExecutor
@@ -75,31 +79,24 @@ Support for Linux, Windows and MacOSX.
 
 ####Example I:
 
-	PhantomJSFileExecutor<String> ex = new PhantomJSSyncFileExecutor(PhantomJSReference.create().build());
-	String output = executor.execute(new File("~/scrapper.js"));
+	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(PhantomJSReference.create().build(), new ExecutionTimeout(1, TimeUnit.SECONDS));
+	String output = executor.execute(new File("~/scrapper.js")).get();
 	System.out.println(output);  // This prints "TEST1"
 
 
 ####Example II:
 
-	PhantomJSFileExecutor<String> ex = new PhantomJSSyncFileExecutor(PhantomJSReference.create().build());
-	String output = executor.execute("console.log('TEST1');phantom.exit();")
-	System.out.println(output);  // This prints "TEST1"
-
-
-####Example III:
-
-	PhantomJSFileExecutor<Future<String>> ex = new PhantomJSAsyncFileExecutor(PhantomJSReference.create().build());
+	PhantomJSFileExecutor ex = new new PhantomJSFileExecutor(PhantomJSReference.create().build(), new ExecutionTimeout(1, TimeUnit.SECONDS));
 	String output = executor.execute("console.log('TEST1');phantom.exit();").get()
 	System.out.println(output);  // This prints "TEST1"
 
-####Example IV:
+####Example III:
 
 	PhantomJSConsoleExecutor ex = new PhantomJSConsoleExecutor(PhantomJSReference.create().build());
 	ex.start();
 	ex.execute("var system = require('system');");
-    System.out.println(ex.execute("system.stdout.writeLine('TEST1');")); // This prints "TEST1"
-    System.out.println( ex.execute("system.stdout.writeLine('TEST2');")); // This prints "TEST2"
-    ex.destroy();
+    	System.out.println(ex.execute("system.stdout.writeLine('TEST1');")); // This prints "TEST1"
+    	System.out.println( ex.execute("system.stdout.writeLine('TEST2');")); // This prints "TEST2"
+    	ex.destroy();
     
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/Jarlakxen/embedphantomjs/trend.png)](https://bitdeli.com/free "Bitdeli Badge")

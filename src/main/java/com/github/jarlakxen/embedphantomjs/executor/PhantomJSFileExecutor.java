@@ -20,6 +20,9 @@
 package com.github.jarlakxen.embedphantomjs.executor;
 
 import java.io.File;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -27,46 +30,97 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
+import com.github.jarlakxen.embedphantomjs.ExecutionTimeout;
 import com.github.jarlakxen.embedphantomjs.PhantomJSReference;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
-public abstract class PhantomJSFileExecutor<T> {
+public class PhantomJSFileExecutor {
 
 	private static final Logger LOGGER = Logger.getLogger(PhantomJSFileExecutor.class);
 
+	private ListeningExecutorService processExecutorService;
+	
+	private ExecutorService timeoutExecutorService;
+
 	private PhantomJSReference phantomReference;
 
-	public PhantomJSFileExecutor(PhantomJSReference phantomReference) {
-		this.phantomReference = phantomReference;
+	private ExecutionTimeout executionTimeout;
+	
+	public PhantomJSFileExecutor(PhantomJSReference phantomReference, ExecutionTimeout executionTimeout) {
+		this(phantomReference, Executors.newCachedThreadPool(), executionTimeout);
 	}
 
-	public T execute(final String fileContent, final String... args) {
-		File tmp = null;
+	public PhantomJSFileExecutor(PhantomJSReference phantomReference, ExecutorService executorService, ExecutionTimeout executionTimeout) {
+		this.phantomReference = phantomReference;
+		this.executionTimeout = executionTimeout;
+		this.processExecutorService = MoreExecutors.listeningDecorator(executorService);
+		this.timeoutExecutorService = Executors.newCachedThreadPool();
+	}
+
+	public ListenableFuture<String> execute(final String fileContent, final String... args) {
 		try {
-			T result = null;
-			tmp = File.createTempFile(RandomStringUtils.randomAlphabetic(10), ".js");
+			final File tmp = File.createTempFile(RandomStringUtils.randomAlphabetic(10), ".js");
 			FileUtils.write(tmp, fileContent);
-			result = execute(tmp, args);
+			ListenableFuture<String> result = execute(tmp, args);
+
+			Futures.addCallback(result, new FutureCallback<String>() {
+				public void onSuccess(String explosion) {
+					onComplete();
+				}
+
+				public void onFailure(Throwable thrown) {
+					LOGGER.error("", thrown);
+					onComplete();
+				}
+
+				public void onComplete() {
+					if (tmp != null) {
+						tmp.delete();
+					}
+				}
+			});
+
 			return result;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
-		} finally {
-			if(tmp!=null){
-				tmp.delete();
-			}
 		}
 	}
 
-	public abstract T execute(final File sourceFile, final String... args);
-
-	public String doExecute(final File sourceFile, final String... args) {
+	public ListenableFuture<String> execute(final File sourceFile, final String... args) {
+		final String cmd = this.phantomReference.getBinaryPath() + " " + sourceFile.getAbsolutePath() + " " + StringUtils.join(args, " ");
 		try {
-			String cmd = this.phantomReference.getBinaryPath() + " " + sourceFile.getAbsolutePath() + " " + StringUtils.join(args, " ");
+			final Process process = Runtime.getRuntime().exec(cmd);
 			LOGGER.info("Command to execute: " + cmd);
-			Process process = Runtime.getRuntime().exec(cmd);
-			String output = IOUtils.toString(process.getInputStream());
-			process.waitFor();
-			LOGGER.debug("Command " + cmd + " output:" + output);
-			return output;
+
+			final ListenableFuture<String> action = processExecutorService.submit(new Callable<String>() {
+				@Override
+				public String call() throws Exception {
+					LOGGER.info("Command to execute: " + cmd);
+					String output = IOUtils.toString(process.getInputStream());
+					process.waitFor();
+					LOGGER.debug("Command " + cmd + " output:" + output);
+					return output;
+				}
+			});
+
+			timeoutExecutorService.submit(new Runnable() {
+				@Override
+				public void run() {
+					try {
+						action.get(executionTimeout.getTimeout(), executionTimeout.getUnit());
+					} catch (Exception e) {
+						action.cancel(false);
+						process.destroy();
+					}
+				}
+			});
+
+			return action;
+
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
