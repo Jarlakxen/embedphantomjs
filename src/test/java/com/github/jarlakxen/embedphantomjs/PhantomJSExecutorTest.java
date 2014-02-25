@@ -60,13 +60,13 @@ public class PhantomJSExecutorTest {
     @Test
     public void test_FileExecutor_FromString() throws InterruptedException, ExecutionException {
     	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(PhantomJSReference.create().build(), new ExecutionTimeout(5, TimeUnit.SECONDS));
-        assertEquals("TEST1\n", ex.execute(DEFAULT_FILE_JS).get());
+        assertEquals("TEST1"+String.format("%n"), ex.execute(DEFAULT_FILE_JS).get());
     }
     
     @Test
     public void test__FileExecutor_FromFile() throws InterruptedException, ExecutionException {
     	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(PhantomJSReference.create().build(), new ExecutionTimeout(5, TimeUnit.SECONDS));
-        assertEquals("TEST1\n", ex.execute(test1).get());
+        assertEquals("TEST1"+String.format("%n"), ex.execute(test1).get());
     }
     
     @Test

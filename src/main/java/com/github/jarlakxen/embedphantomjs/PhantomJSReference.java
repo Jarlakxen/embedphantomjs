@@ -215,7 +215,7 @@ public class PhantomJSReference {
 
 		ArchiveEntry entry;
 		while ((entry = archiveInputStream.getNextEntry()) != null) {
-			if (entry.getName().endsWith(PHANTOMJS_DOWNLOAD_BINARY_PATH)) {
+			if (entry.getName().endsWith(PHANTOMJS_DOWNLOAD_BINARY_PATH) || entry.getName().toLowerCase().endsWith("phantomjs.exe")) {
 
 				// Create target folder
 				new File(this.getTargetInstallationFolder() + "/" + this.getVersion().getDescription()).mkdirs();
