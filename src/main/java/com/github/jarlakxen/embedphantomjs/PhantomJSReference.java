@@ -58,7 +58,7 @@ public class PhantomJSReference {
 	public static class PhantomJSReferenceBuilder {
 		private Version version = Version.v_1_9_2;
 		private String architecture = System.getProperty("os.arch").toLowerCase();
-		private String hostOs = System.getProperty("os.name").toLowerCase();
+		private String hostOs;
 
 		private String downloadUrl = "http://phantomjs.googlecode.com/files/";
 		private String targetInstallationFolder = System.getProperty("user.home") + "/.embedphantomjs";
@@ -90,6 +90,17 @@ public class PhantomJSReference {
 
 		public PhantomJSReference build() {
 			return new PhantomJSReference(this);
+		}
+		
+		public PhantomJSReferenceBuilder()
+		{
+			String os = System.getProperty("os.name").toLowerCase();
+			if (os.contains("win"))
+				hostOs = "win";
+			else if (os.contains("mac"))
+				hostOs = "macosx";
+			else
+				hostOs = "linux";
 		}
 	}
 
@@ -204,7 +215,7 @@ public class PhantomJSReference {
 
 		ArchiveEntry entry;
 		while ((entry = archiveInputStream.getNextEntry()) != null) {
-			if (entry.getName().endsWith(PHANTOMJS_DOWNLOAD_BINARY_PATH)) {
+			if (entry.getName().endsWith(PHANTOMJS_DOWNLOAD_BINARY_PATH) || entry.getName().toLowerCase().endsWith("phantomjs.exe")) {
 
 				// Create target folder
 				new File(this.getTargetInstallationFolder() + "/" + this.getVersion().getDescription()).mkdirs();
