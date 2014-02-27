@@ -17,10 +17,13 @@ Stable [OSS Sonatype](https://oss.sonatype.org/content/repositories/releases/com
 	<dependency>
 		<groupId>com.github.jarlakxen</groupId>
 		<artifactId>embedphantomjs</artifactId>
-		<version>2.7</version>
+		<version>2.8</version>
 	</dependency>
 
 ### Changelog
+
+2.8
+- Better windows support ( Thanks to @Dmitry-Shweikus )
 
 2.7
 - Unify Sync and Async interfaces for PhantomJSFileExecutor
