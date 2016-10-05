@@ -85,7 +85,11 @@ public class PhantomJSReference {
 			this.downloadUrl = downloadUrl;
 			return this;
 		}
-
+		/**
+		 * Adds command line options so they are sent to PhantomJs by the executor
+		 * @param commandLineOptions Array of command line options to send
+		 * @return Reference to the builder
+		 */
 		public PhantomJSReferenceBuilder addCommandLineOptions(final String... commandLineOptions){
 			this.commandLineOptions = StringUtils.join(commandLineOptions, " ");
 			return this;
@@ -184,7 +188,10 @@ public class PhantomJSReference {
 			binaryPath = binaryFilePath;
 		}
 	}
-
+	/**
+	 * Command line options that are going to be sent to PhantomJS
+	 * @return
+	 */
 	public String getCommandLineOptions() {
 		return commandLineOptions;
 	}
