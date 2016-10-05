@@ -33,6 +33,7 @@ import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.log4j.Logger;
 
@@ -63,6 +64,8 @@ public class PhantomJSReference {
 		private String downloadUrl = "http://phantomjs.googlecode.com/files/";
 		private String targetInstallationFolder = System.getProperty("user.home") + "/.embedphantomjs";
 
+		private String commandLineOptions;
+		
 		public PhantomJSReferenceBuilder withVersion(Version version) {
 			this.version = version;
 			return this;
@@ -82,7 +85,15 @@ public class PhantomJSReference {
 			this.downloadUrl = downloadUrl;
 			return this;
 		}
-
+		/**
+		 * Adds command line options so they are sent to PhantomJs by the executor
+		 * @param commandLineOptions Array of command line options to send
+		 * @return Reference to the builder
+		 */
+		public PhantomJSReferenceBuilder addCommandLineOptions(final String... commandLineOptions){
+			this.commandLineOptions = StringUtils.join(commandLineOptions, " ");
+			return this;
+		}
 		public PhantomJSReferenceBuilder useTargetInstallationFolder(String targetInstallationFolder) {
 			this.targetInstallationFolder = targetInstallationFolder;
 			return this;
@@ -91,6 +102,7 @@ public class PhantomJSReference {
 		public PhantomJSReference build() {
 			return new PhantomJSReference(this);
 		}
+		
 		
 		public PhantomJSReferenceBuilder()
 		{
@@ -110,6 +122,7 @@ public class PhantomJSReference {
 	private String downloadUrl;
 	private String targetInstallationFolder;
 	private String binaryPath;
+	private String commandLineOptions;
 
 	private PhantomJSReference(PhantomJSReferenceBuilder builder) {
 		this.version = builder.version;
@@ -117,6 +130,7 @@ public class PhantomJSReference {
 		this.hostOs = builder.hostOs;
 		this.downloadUrl = builder.downloadUrl;
 		this.targetInstallationFolder = builder.targetInstallationFolder;
+		this.commandLineOptions = builder.commandLineOptions ==null?"":builder.commandLineOptions;
 	}
 
 	public String getBinaryPath() {
@@ -173,6 +187,13 @@ public class PhantomJSReference {
 
 			binaryPath = binaryFilePath;
 		}
+	}
+	/**
+	 * Command line options that are going to be sent to PhantomJS
+	 * @return
+	 */
+	public String getCommandLineOptions() {
+		return commandLineOptions;
 	}
 
 	private void downloadPhantomJS(File binaryFile) throws IOException {

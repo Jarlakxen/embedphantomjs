@@ -89,9 +89,15 @@ public class PhantomJSFileExecutor {
 			throw new RuntimeException(e);
 		}
 	}
-
+	/**
+	 * Invokes the instances of PhantomJS
+	 * @param sourceFile JavaScript source file that is executed by PhantomJA
+	 * @param args Parameters that are read by sourceFile
+	 * @return The result that the process has output in console
+	 */
 	public ListenableFuture<String> execute(final File sourceFile, final String... args) {
-		final String cmd = this.phantomReference.getBinaryPath() + " " + sourceFile.getAbsolutePath() + " " + StringUtils.join(args, " ");
+		final String cmd = this.phantomReference.getBinaryPath() + " " + this.phantomReference.getCommandLineOptions()
+				+ " " + sourceFile.getAbsolutePath() + " " + StringUtils.join(args, " ");
 		try {
 			final Process process = Runtime.getRuntime().exec(cmd);
 			LOGGER.info("Command to execute: " + cmd);
