@@ -91,7 +91,9 @@ public class PhantomJSFileExecutor {
 	}
 
 	public ListenableFuture<String> execute(final File sourceFile, final String... args) {
-		final String cmd = this.phantomReference.getBinaryPath() + " " + sourceFile.getAbsolutePath() + " " + StringUtils.join(args, " ");
+		final String cmd = this.phantomReference.getBinaryPath() + " "+ this.phantomReference.getCommandLineOptions() + " "
+				+ this.phantomReference.getCommandLineOptions() + " " + sourceFile.getAbsolutePath() + " "
+				+ StringUtils.join(args, " ");
 		try {
 			final Process process = Runtime.getRuntime().exec(cmd);
 			LOGGER.info("Command to execute: " + cmd);
