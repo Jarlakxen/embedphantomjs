@@ -19,7 +19,7 @@
  */
 package com.github.jarlakxen.embedphantomjs.exception;
 
-public class UnexpectedProcessEndException extends Exception {
+public class UnexpectedProcessEndException extends RuntimeException {
 	private static final long serialVersionUID = 6312464814429570001L;
 	
 	public UnexpectedProcessEndException() {

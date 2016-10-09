@@ -21,9 +21,10 @@ package com.github.jarlakxen.embedphantomjs.executor;
 
 import java.io.File;
 import java.nio.charset.Charset;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -33,101 +34,91 @@ import org.apache.log4j.Logger;
 
 import com.github.jarlakxen.embedphantomjs.ExecutionTimeout;
 import com.github.jarlakxen.embedphantomjs.PhantomJSReference;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 
 public class PhantomJSFileExecutor {
 
 	private static final Logger LOGGER = Logger.getLogger(PhantomJSFileExecutor.class);
 
-	private ListeningExecutorService processExecutorService;
-	
-	private ExecutorService timeoutExecutorService;
+	private final ExecutorService processExecutorService;
 
-	private PhantomJSReference phantomReference;
+	private final PhantomJSReference phantomReference;
 
-	private ExecutionTimeout executionTimeout;
-	
+	private final ExecutionTimeout executionTimeout;
+
 	public PhantomJSFileExecutor(PhantomJSReference phantomReference, ExecutionTimeout executionTimeout) {
 		this(phantomReference, Executors.newCachedThreadPool(), executionTimeout);
 	}
 
-	public PhantomJSFileExecutor(PhantomJSReference phantomReference, ExecutorService executorService, ExecutionTimeout executionTimeout) {
+	public PhantomJSFileExecutor(final PhantomJSReference phantomReference, final ExecutorService executorService,
+			final ExecutionTimeout executionTimeout) {
 		this.phantomReference = phantomReference;
 		this.executionTimeout = executionTimeout;
-		this.processExecutorService = MoreExecutors.listeningDecorator(executorService);
-		this.timeoutExecutorService = Executors.newCachedThreadPool();
+		this.processExecutorService = executorService;
 	}
 
-	public ListenableFuture<String> execute(final String fileContent, final String... args) {
+	public CompletableFuture<String> execute(final String fileContent, final String... args) {
 		try {
 			final File tmp = File.createTempFile(RandomStringUtils.randomAlphabetic(10), ".js");
 			FileUtils.write(tmp, fileContent, Charset.defaultCharset());
-			final ListenableFuture<String> result = execute(tmp, args);
-
-			Futures.addCallback(result, new FutureCallback<String>() {
-				public void onSuccess(String explosion) {
-					onComplete();
+			final CompletableFuture<String> result = execute(tmp, args);
+			
+			return result.handle((value, error) -> {
+				if (tmp != null) {
+					tmp.delete();
 				}
-
-				public void onFailure(Throwable thrown) {
-					LOGGER.error("", thrown);
-					onComplete();
-				}
-
-				public void onComplete() {
-					if (tmp != null) {
-						tmp.delete();
-					}
-				}
-			});
-
-			return result;
+				
+		        if (error == null){
+		            return CompletableFuture.completedFuture(value);
+		        }
+		        
+		        LOGGER.error("", error);
+		        final CompletableFuture<String> errorFuture = new CompletableFuture<>();
+		        errorFuture.completeExceptionally(error);
+		        return errorFuture;
+		    }).thenCompose(Function.identity());
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
+
 	/**
 	 * Invokes the instances of PhantomJS
-	 * @param sourceFile JavaScript source file that is executed by PhantomJA
-	 * @param args Parameters that are read by sourceFile
+	 * 
+	 * @param sourceFile
+	 *            JavaScript source file that is executed by PhantomJA
+	 * @param args
+	 *            Parameters that are read by sourceFile
 	 * @return The result that the process has output in console
 	 */
-	public ListenableFuture<String> execute(final File sourceFile, final String... args) {
+	public CompletableFuture<String> execute(final File sourceFile, final String... args) {
 		final String cmd = this.phantomReference.getBinaryPath() + " " + this.phantomReference.getCommandLineOptions()
 				+ " " + sourceFile.getAbsolutePath() + " " + StringUtils.join(args, " ");
 		try {
 			final Process process = Runtime.getRuntime().exec(cmd);
 			LOGGER.info("Command to execute: " + cmd);
 
-			final ListenableFuture<String> action = processExecutorService.submit(new Callable<String>() {
-				@Override
-				public String call() throws Exception {
+			final CompletableFuture<String> action = CompletableFuture.supplyAsync(() -> {
+				try {
 					LOGGER.info("Command to execute: " + cmd);
 					final String output = IOUtils.toString(process.getInputStream(), Charset.defaultCharset());
 					process.waitFor();
 					LOGGER.debug("Command " + cmd + " output:" + output);
 					return output;
+				} catch (Exception e) {
+					throw new RuntimeException(e);
 				}
-			});
+			}, processExecutorService);
 
-			timeoutExecutorService.submit(new Runnable() {
-				@Override
-				public void run() {
-					try {
-						action.get(executionTimeout.getTimeout(), executionTimeout.getUnit());
-					} catch (Exception e) {
-						action.cancel(false);
-						process.destroy();
-					}
+			CompletableFuture.runAsync(() -> {
+				try {
+					action.get(executionTimeout.getTimeout(), executionTimeout.getUnit());
+				} catch (Exception ex) {
+					action.completeExceptionally(ex);
+					process.destroy();
 				}
 			});
 
 			return action;
-
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}

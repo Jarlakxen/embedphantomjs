@@ -24,6 +24,7 @@ import static org.junit.Assert.assertEquals;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -35,7 +36,6 @@ import org.junit.Test;
 import com.github.jarlakxen.embedphantomjs.exception.UnexpectedProcessEndException;
 import com.github.jarlakxen.embedphantomjs.executor.PhantomJSConsoleExecutor;
 import com.github.jarlakxen.embedphantomjs.executor.PhantomJSFileExecutor;
-import com.google.common.util.concurrent.ListenableFuture;
 
 public class PhantomJSExecutorTest {
 
@@ -74,9 +74,10 @@ public class PhantomJSExecutorTest {
     @Test
     public void test_FileExecutor_FromString_Timeout() throws InterruptedException, ExecutionException {
     	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(phantomJSRef, new ExecutionTimeout(100, TimeUnit.MILLISECONDS));
-    	ListenableFuture<String> result = ex.execute("while(true){};");
+    	CompletableFuture<String> result = ex.execute("while(true){};");
     	Thread.sleep(200);
-    	assertEquals(true,result.isCancelled());
+    	assertEquals(true,result.isDone());
+    	assertEquals(true,result.isCompletedExceptionally());
     }
  
     @Test

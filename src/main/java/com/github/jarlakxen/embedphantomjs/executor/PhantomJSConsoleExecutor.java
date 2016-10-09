@@ -29,9 +29,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.Charset;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.commons.io.IOUtils;
@@ -40,9 +40,6 @@ import org.apache.log4j.Logger;
 
 import com.github.jarlakxen.embedphantomjs.PhantomJSReference;
 import com.github.jarlakxen.embedphantomjs.exception.UnexpectedProcessEndException;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 
 public class PhantomJSConsoleExecutor {
 
@@ -57,24 +54,28 @@ public class PhantomJSConsoleExecutor {
 	private static final List<String> DEFAULT_PHANTOMJS_CONSOLE_POSTFIXS = asList("{}", "undefined");
 	private static final String PHANTOMJS_PARSER_ERROR_PREFIX = "Parse error";
 
-	private ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
-	private PhantomJSReference phantomReference;
-	private File scriptFile;
-	private String scriptArgs[];
-	private String consolePrefix;
-	private List<String> consolePostfix = Collections.emptyList();
+	private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+	private final PhantomJSReference phantomReference;
+	private final File scriptFile;
+	private final String scriptArgs[];
+	private final String consolePrefix;
+	private final List<String> consolePostfix;
 	private Process process;
 
-	public PhantomJSConsoleExecutor(PhantomJSReference phantomReference) {
-		this.phantomReference = phantomReference;
-		this.consolePrefix = DEFAULT_PHANTOMJS_CONSOLE_PREFIX;
-		this.consolePostfix = DEFAULT_PHANTOMJS_CONSOLE_POSTFIXS;
+	public PhantomJSConsoleExecutor(final PhantomJSReference phantomReference) {
+		this(phantomReference, null);
 	}
 
-	public PhantomJSConsoleExecutor(PhantomJSReference phantomReference, final File scriptFile, final String... scriptArgs) {
+	public PhantomJSConsoleExecutor(final PhantomJSReference phantomReference, final File scriptFile, final String... scriptArgs) {
+		this(phantomReference, DEFAULT_PHANTOMJS_CONSOLE_PREFIX, DEFAULT_PHANTOMJS_CONSOLE_POSTFIXS, scriptFile, scriptArgs);
+	}
+	
+	public PhantomJSConsoleExecutor(final PhantomJSReference phantomReference, final String consolePrefix, final List<String> consolePostfix, final File scriptFile, final String... scriptArgs) {
 		this.phantomReference = phantomReference;
 		this.scriptFile = scriptFile;
 		this.scriptArgs = scriptArgs;
+		this.consolePrefix = consolePrefix;
+		this.consolePostfix = consolePostfix;
 	}
 
 	public int getPid() {
@@ -138,30 +139,24 @@ public class PhantomJSConsoleExecutor {
 		return process.exitValue();
 	}
 
-	public ListenableFuture<String> execute(final String scriptSource) throws UnexpectedProcessEndException {
+	public CompletableFuture<String> execute(final String scriptSource) {
 		return this.execute(IOUtils.toInputStream(scriptSource, Charset.defaultCharset()), consolePostfix);
 	}
 
-	public ListenableFuture<String> execute(final String scriptSource, String... endLines) throws UnexpectedProcessEndException {
+	public CompletableFuture<String> execute(final String scriptSource, String... endLines) {
 		return this.execute(IOUtils.toInputStream(scriptSource, Charset.defaultCharset()), asList(endLines));
 	}
 
-	public ListenableFuture<String> execute(final InputStream scriptSourceInputStream, String... endLines) throws UnexpectedProcessEndException {
+	public CompletableFuture<String> execute(final InputStream scriptSourceInputStream, String... endLines) {
 		return this.execute(scriptSourceInputStream, asList(endLines));
 	}
 
-	public ListenableFuture<String> execute(final InputStream scriptSourceInputStream, final List<String> endLines)
+	public CompletableFuture<String> execute(final InputStream scriptSourceInputStream, final List<String> endLines)
 			throws UnexpectedProcessEndException {
-		return executorService.submit(new Callable<String>() {
-			@Override
-			public String call() throws Exception {
-				return doExecute(scriptSourceInputStream, endLines);
-			}
-		});
+		return CompletableFuture.supplyAsync(() -> doExecute(scriptSourceInputStream, endLines), executorService);
 	}
 	
-	private String doExecute(final InputStream scriptSourceInputStream, final List<String> endLines)
-			throws UnexpectedProcessEndException {
+	private String doExecute(final InputStream scriptSourceInputStream, final List<String> endLines) {
 
 		if (!isAlive()) {
 			throw new UnexpectedProcessEndException();
@@ -190,9 +185,7 @@ public class PhantomJSConsoleExecutor {
 	}
 
 	private String readPhantomJSOutput(InputStream processInput, List<String> endLines) throws IOException {
-
 		final StringBuilder out = new StringBuilder();
-
 		final BufferedReader in = new BufferedReader(new InputStreamReader(processInput, "UTF-8"));
 
 		while (true) {
@@ -236,18 +229,9 @@ public class PhantomJSConsoleExecutor {
 		return inputString.toString();
 	}
 	
-	public void setConsolePrefix(final String consolePrefix) {
-		this.consolePrefix = consolePrefix;
-	}
-	
 	public String getConsolePrefix() {
 		return consolePrefix;
 	}
-	
-	public void setConsolePostfix(List<String> consolePostfix) {
-		this.consolePostfix = consolePostfix;
-	}
-	
 	public List<String> getConsolePostfix() {
 		return consolePostfix;
 	}
