@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.github.jarlakxen</groupId>
 	<artifactId>embedphantomjs</artifactId>
-	<version>2.11-SNAPSHOT</version>
+	<version>3.0</version>
 	<name>EmbedPhantomJS </name>
 
 	<description>Embedded PhantomJS for Java</description>
@@ -20,7 +20,7 @@
 		<connection>scm:git:git@github.com:Jarlakxen/embedphantomjs.git</connection>
 		<developerConnection>scm:git:git@github.com:Jarlakxen/embedphantomjs.git</developerConnection>
 		<url>git@github.com:Jarlakxen/embedphantomjs.git</url>
-	  <tag>HEAD</tag>
+	  <tag>embedphantomjs-3.0</tag>
   </scm>
 
 	<developers>
