@@ -23,8 +23,8 @@ import java.util.concurrent.TimeUnit;
 
 public class ExecutionTimeout {
 
-	private long timeout;
-	private TimeUnit unit;
+	private final long timeout;
+	private final TimeUnit unit;
 
 	public ExecutionTimeout(long timeout, TimeUnit unit) {
 		this.timeout = timeout;

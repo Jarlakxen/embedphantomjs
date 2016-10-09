@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.Properties;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
@@ -57,31 +58,31 @@ public class PhantomJSReference {
 	 * 
 	 */
 	public static class PhantomJSReferenceBuilder {
-		private Version version = Version.v_1_9_2;
+		private Version version = Version.v_2_1_1;
 		private String architecture = System.getProperty("os.arch").toLowerCase();
 		private String hostOs;
 
-		private String downloadUrl = "http://phantomjs.googlecode.com/files/";
+		private String downloadUrl = "https://bitbucket.org/ariya/phantomjs/downloads/";
 		private String targetInstallationFolder = System.getProperty("user.home") + "/.embedphantomjs";
 
 		private String commandLineOptions;
 		
-		public PhantomJSReferenceBuilder withVersion(Version version) {
+		public PhantomJSReferenceBuilder withVersion(final Version version) {
 			this.version = version;
 			return this;
 		}
 
-		public PhantomJSReferenceBuilder withArchitecture(String architecture) {
+		public PhantomJSReferenceBuilder withArchitecture(final String architecture) {
 			this.architecture = architecture;
 			return this;
 		}
 
-		public PhantomJSReferenceBuilder withHostOS(String hostOs) {
+		public PhantomJSReferenceBuilder withHostOS(final String hostOs) {
 			this.hostOs = hostOs;
 			return this;
 		}
 
-		public PhantomJSReferenceBuilder useDownloadUrl(String downloadUrl) {
+		public PhantomJSReferenceBuilder useDownloadUrl(final String downloadUrl) {
 			this.downloadUrl = downloadUrl;
 			return this;
 		}
@@ -94,7 +95,7 @@ public class PhantomJSReference {
 			this.commandLineOptions = StringUtils.join(commandLineOptions, " ");
 			return this;
 		}
-		public PhantomJSReferenceBuilder useTargetInstallationFolder(String targetInstallationFolder) {
+		public PhantomJSReferenceBuilder useTargetInstallationFolder(final String targetInstallationFolder) {
 			this.targetInstallationFolder = targetInstallationFolder;
 			return this;
 		}
@@ -106,7 +107,7 @@ public class PhantomJSReference {
 		
 		public PhantomJSReferenceBuilder()
 		{
-			String os = System.getProperty("os.name").toLowerCase();
+			final String os = System.getProperty("os.name").toLowerCase();
 			if (os.contains("win"))
 				hostOs = "win";
 			else if (os.contains("mac"))
@@ -124,7 +125,7 @@ public class PhantomJSReference {
 	private String binaryPath;
 	private String commandLineOptions;
 
-	private PhantomJSReference(PhantomJSReferenceBuilder builder) {
+	private PhantomJSReference(final PhantomJSReferenceBuilder builder) {
 		this.version = builder.version;
 		this.architecture = builder.architecture;
 		this.hostOs = builder.hostOs;
@@ -164,8 +165,8 @@ public class PhantomJSReference {
 			throw new RuntimeException("Unsopported version for downloading!");
 		}
 
-		File binaryFile = new File(this.getTargetInstallationFolder() + "/" + this.getVersion().getDescription() + "/phantomjs");
-		String binaryFilePath = binaryFile.getAbsolutePath();
+		final File binaryFile = new File(this.getTargetInstallationFolder() + "/" + this.getVersion().getDescription() + "/phantomjs");
+		final String binaryFilePath = binaryFile.getAbsolutePath();
 
 		// Check if phantomjs is already installed in target path
 		LOGGER.debug("Checking PhantomJS installation in " + binaryFilePath);
@@ -196,13 +197,13 @@ public class PhantomJSReference {
 		return commandLineOptions;
 	}
 
-	private void downloadPhantomJS(File binaryFile) throws IOException {
-		Properties properties = new Properties();
+	private void downloadPhantomJS(final File binaryFile) throws IOException {
+		final Properties properties = new Properties();
 		properties.load(this.getClass().getClassLoader().getResourceAsStream(PHANTOMJS_DATA_FILE));
 
 		String name = properties.getProperty(this.getVersion().getDescription() + "." + this.getHostOs() + ".name");
 
-		String architecture = this.getArchitecture().indexOf("64") >= 0 ? "x86_64" : "i686";
+		final String architecture = this.getArchitecture().indexOf("64") >= 0 ? "x86_64" : "i686";
 
 		LOGGER.debug("System Data: Arch [" + architecture + "] - OS [" + this.getHostOs() + "]");
 
@@ -211,8 +212,8 @@ public class PhantomJSReference {
 		}
 
 		// Download PhantomJS
-		URL downloadPath = new URL(this.getDownloadUrl() + name);
-		File phantomJsCompressedFile = new File(System.getProperty("java.io.tmpdir") + "/" + name);
+		final URL downloadPath = new URL(this.getDownloadUrl() + name);
+		final File phantomJsCompressedFile = new File(System.getProperty("java.io.tmpdir") + "/" + name);
 
 		LOGGER.info("Downloading " + downloadPath.getPath() + " ...");
 
@@ -251,7 +252,7 @@ public class PhantomJSReference {
 				binaryFile.setReadable(true);
 
 				// Untar the binary file
-				FileOutputStream outputBinary = new FileOutputStream(binaryFile);
+				final FileOutputStream outputBinary = new FileOutputStream(binaryFile);
 
 				LOGGER.info("Un-compress download to " + downloadPath.getPath() + " ...");
 				IOUtils.copy(archiveInputStream, outputBinary);
@@ -263,12 +264,12 @@ public class PhantomJSReference {
 		archiveInputStream.close();
 	}
 
-	private String checkPhantomJSBinary(String path) {
+	private String checkPhantomJSBinary(final String path) {
 		try {
-			Process process = Runtime.getRuntime().exec(path + " --version");
+			final Process process = Runtime.getRuntime().exec(path + " --version");
 			process.waitFor();
 
-			String processOutput = IOUtils.toString(process.getInputStream());
+			final String processOutput = IOUtils.toString(process.getInputStream(), Charset.defaultCharset());
 
 			return processOutput.substring(0, 5);
 
@@ -279,13 +280,13 @@ public class PhantomJSReference {
 		return null;
 	}
 
-	private Boolean checkPhantomJSBinaryAnyVersion(String path) {
-		String outputVersion = checkPhantomJSBinary(path);
+	private Boolean checkPhantomJSBinaryAnyVersion(final String path) {
+		final String outputVersion = checkPhantomJSBinary(path);
 		return Version.fromValue(outputVersion) != null;
 	}
 
-	private Boolean checkPhantomJSBinaryVersion(String path, Version version) {
-		String outputVersion = checkPhantomJSBinary(path);
+	private Boolean checkPhantomJSBinaryVersion(final String path, final Version version) {
+		final String outputVersion = checkPhantomJSBinary(path);
 		return version.getDescription().equals(outputVersion);
 	}
 

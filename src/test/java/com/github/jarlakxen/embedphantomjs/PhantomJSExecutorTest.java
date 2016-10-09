@@ -23,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -38,18 +39,19 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 public class PhantomJSExecutorTest {
 
-    private static String DEFAULT_FILE_JS = "console.log('TEST1');phantom.exit();";
-	
-    private static String DEFAULT_CONSOLE_BOOTSTRAP = "var system = require('system');";
-    
-	private static String DEFAULT_CONSOLE_JS = "system.stdout.writeLine('TEST1');";
+    private static final String DEFAULT_FILE_JS = "console.log('TEST1');phantom.exit();";
+    private static final String DEFAULT_CONSOLE_BOOTSTRAP = "var system = require('system');";
+	private static final String DEFAULT_CONSOLE_JS = "system.standardout.writeLine('TEST1')";
 			
-    private static File test1 = new File(System.getProperty("java.io.tmpdir") + "/embedphantomjs.test1.js");
+    private static final File test1 = new File(System.getProperty("java.io.tmpdir") + "/embedphantomjs.test1.js");
+    
+    private static final PhantomJSReference phantomJSRef = PhantomJSReference.create().build();
 
     @BeforeClass
     public static void setUpClass() throws IOException {
         test1.createNewFile();
-        FileUtils.write(test1, DEFAULT_FILE_JS);
+        FileUtils.write(test1, DEFAULT_FILE_JS, Charset.defaultCharset());
+        phantomJSRef.ensureBinary();
     }
 
     @AfterClass
@@ -59,31 +61,31 @@ public class PhantomJSExecutorTest {
     
     @Test
     public void test_FileExecutor_FromString() throws InterruptedException, ExecutionException {
-    	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(PhantomJSReference.create().build(), new ExecutionTimeout(5, TimeUnit.SECONDS));
+    	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(phantomJSRef, new ExecutionTimeout(5, TimeUnit.SECONDS));
         assertEquals("TEST1"+String.format("%n"), ex.execute(DEFAULT_FILE_JS).get());
     }
     
     @Test
     public void test__FileExecutor_FromFile() throws InterruptedException, ExecutionException {
-    	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(PhantomJSReference.create().build(), new ExecutionTimeout(5, TimeUnit.SECONDS));
+    	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(phantomJSRef, new ExecutionTimeout(5, TimeUnit.SECONDS));
         assertEquals("TEST1"+String.format("%n"), ex.execute(test1).get());
     }
     
     @Test
     public void test_FileExecutor_FromString_Timeout() throws InterruptedException, ExecutionException {
-    	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(PhantomJSReference.create().build(), new ExecutionTimeout(100, TimeUnit.MILLISECONDS));
+    	PhantomJSFileExecutor ex = new PhantomJSFileExecutor(phantomJSRef, new ExecutionTimeout(100, TimeUnit.MILLISECONDS));
     	ListenableFuture<String> result = ex.execute("while(true){};");
     	Thread.sleep(200);
     	assertEquals(true,result.isCancelled());
     }
-    
+ 
     @Test
     public void test_executor_FromConsole() throws UnexpectedProcessEndException, InterruptedException, ExecutionException {
-    	PhantomJSConsoleExecutor ex = new PhantomJSConsoleExecutor(PhantomJSReference.create().build());
+    	PhantomJSConsoleExecutor ex = new PhantomJSConsoleExecutor(phantomJSRef);
     	ex.start();
-    	ex.execute(DEFAULT_CONSOLE_BOOTSTRAP);
-        assertEquals("TEST1", ex.execute(DEFAULT_CONSOLE_JS).get());
-        assertEquals("TEST1", ex.execute(DEFAULT_CONSOLE_JS).get());
+    	ex.execute(DEFAULT_CONSOLE_BOOTSTRAP).get();
+        assertEquals("TEST1", ex.execute(DEFAULT_CONSOLE_JS, "true").get());
+        assertEquals("TEST1", ex.execute(DEFAULT_CONSOLE_JS, "true").get());
         ex.destroy();
     }
 }

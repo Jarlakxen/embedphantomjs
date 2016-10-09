@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -138,11 +139,11 @@ public class PhantomJSConsoleExecutor {
 	}
 
 	public ListenableFuture<String> execute(final String scriptSource) throws UnexpectedProcessEndException {
-		return this.execute(IOUtils.toInputStream(scriptSource), consolePostfix);
+		return this.execute(IOUtils.toInputStream(scriptSource, Charset.defaultCharset()), consolePostfix);
 	}
 
 	public ListenableFuture<String> execute(final String scriptSource, String... endLines) throws UnexpectedProcessEndException {
-		return this.execute(IOUtils.toInputStream(scriptSource), asList(endLines));
+		return this.execute(IOUtils.toInputStream(scriptSource, Charset.defaultCharset()), asList(endLines));
 	}
 
 	public ListenableFuture<String> execute(final InputStream scriptSourceInputStream, String... endLines) throws UnexpectedProcessEndException {
@@ -159,7 +160,7 @@ public class PhantomJSConsoleExecutor {
 		});
 	}
 	
-	private String doExecute(final InputStream scriptSourceInputStream, List<String> endLines)
+	private String doExecute(final InputStream scriptSourceInputStream, final List<String> endLines)
 			throws UnexpectedProcessEndException {
 
 		if (!isAlive()) {
@@ -167,7 +168,7 @@ public class PhantomJSConsoleExecutor {
 		}
 
 		try {
-			String input = copy(scriptSourceInputStream, process.getOutputStream());
+			final String input = copy(scriptSourceInputStream, process.getOutputStream());
 			// Append Enter to the input
 
 			if (!endWithNewLine(input)) {
@@ -178,7 +179,7 @@ public class PhantomJSConsoleExecutor {
 
 			process.getOutputStream().flush();
 
-			String output = readPhantomJSOutput(process.getInputStream(), endLines);
+			final String output = readPhantomJSOutput(process.getInputStream(), endLines);
 
 			LOGGER.debug("Program output: " + output);
 
@@ -192,11 +193,13 @@ public class PhantomJSConsoleExecutor {
 
 		final StringBuilder out = new StringBuilder();
 
-		BufferedReader in = new BufferedReader(new InputStreamReader(processInput, "UTF-8"));
+		final BufferedReader in = new BufferedReader(new InputStreamReader(processInput, "UTF-8"));
 
 		while (true) {
-			String line = in.readLine();
+			final String line = in.readLine();
 
+			LOGGER.trace("Incoming line from process: " + line);
+			
 			if (line.equals(PHANTOMJS_PARSER_ERROR_PREFIX)) {
 				return line;
 			}
@@ -218,14 +221,13 @@ public class PhantomJSConsoleExecutor {
 		return out.toString();
 	}
 
-	private boolean endWithNewLine(String input) {
+	private boolean endWithNewLine(final String input) {
 		return input.endsWith(String.valueOf(SYSTEM_NEWLINE));
 	}
 
-	private String copy(InputStream input, OutputStream output) throws IOException {
-
-		StringBuilder inputString = new StringBuilder();
-		byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+	private String copy(final InputStream input, final OutputStream output) throws IOException {
+		final StringBuilder inputString = new StringBuilder();
+		final byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
 		int n = 0;
 		while (EOF != (n = input.read(buffer))) {
 			output.write(buffer, 0, n);
@@ -234,7 +236,7 @@ public class PhantomJSConsoleExecutor {
 		return inputString.toString();
 	}
 	
-	public void setConsolePrefix(String consolePrefix) {
+	public void setConsolePrefix(final String consolePrefix) {
 		this.consolePrefix = consolePrefix;
 	}
 	

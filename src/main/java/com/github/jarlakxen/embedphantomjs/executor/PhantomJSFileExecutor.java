@@ -20,6 +20,7 @@
 package com.github.jarlakxen.embedphantomjs.executor;
 
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -64,8 +65,8 @@ public class PhantomJSFileExecutor {
 	public ListenableFuture<String> execute(final String fileContent, final String... args) {
 		try {
 			final File tmp = File.createTempFile(RandomStringUtils.randomAlphabetic(10), ".js");
-			FileUtils.write(tmp, fileContent);
-			ListenableFuture<String> result = execute(tmp, args);
+			FileUtils.write(tmp, fileContent, Charset.defaultCharset());
+			final ListenableFuture<String> result = execute(tmp, args);
 
 			Futures.addCallback(result, new FutureCallback<String>() {
 				public void onSuccess(String explosion) {
@@ -106,7 +107,7 @@ public class PhantomJSFileExecutor {
 				@Override
 				public String call() throws Exception {
 					LOGGER.info("Command to execute: " + cmd);
-					String output = IOUtils.toString(process.getInputStream());
+					final String output = IOUtils.toString(process.getInputStream(), Charset.defaultCharset());
 					process.waitFor();
 					LOGGER.debug("Command " + cmd + " output:" + output);
 					return output;

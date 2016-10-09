@@ -26,7 +26,7 @@ public class UnexpectedProcessEndException extends Exception {
 		
 	}
 	
-	public UnexpectedProcessEndException(Throwable throwable) {
+	public UnexpectedProcessEndException(final Throwable throwable) {
 		super(throwable);
 	}
 
