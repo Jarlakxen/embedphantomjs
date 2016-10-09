@@ -14,13 +14,20 @@ This project provides an easy interface for execute PhantomJS with Java.
 
 Stable [OSS Sonatype](https://oss.sonatype.org/content/repositories/releases/com/github/jarlakxen/embedphantomjs/maven-metadata.xml)
 
+```xml
 	<dependency>
 		<groupId>com.github.jarlakxen</groupId>
 		<artifactId>embedphantomjs</artifactId>
-		<version>2.8</version>
+		<version>2.9</version>
 	</dependency>
-
+```
 ### Changelog
+
+2.9
+- #3
+- Update dependancies
+- Sopport for versions last versions of PhantomJS
+- Move PhantomJS download url to bitbucket.
 
 2.8
 - Better windows support ( Thanks to @Dmitry-Shweikus )
@@ -75,7 +82,7 @@ Stable [OSS Sonatype](https://oss.sonatype.org/content/repositories/releases/com
 
 ### Supported Versions
 
-Versions: 1.9.2, 1.9.1, 1.9.0, 1.8.2, 1.8.1, 1.8.0, 1.7.0, 1.6.1, 1.6.0, 1.5.0, 1.4.1, 1.4.0, 1.3.0
+Versions: 2.1.1, 1.9.8, 1.9.7, 1.9.6, 1.9.5, 1.9.4, 1.9.3, 1.9.2, 1.9.1, 1.9.0, 1.8.2, 1.8.1, 1.8.0, 1.7.0, 1.6.1, 1.6.0, 1.5.0, 1.4.1, 1.4.0, 1.3.0
 Support for Linux, Windows and MacOSX.
 
 ### Usage
@@ -98,8 +105,8 @@ Support for Linux, Windows and MacOSX.
 	PhantomJSConsoleExecutor ex = new PhantomJSConsoleExecutor(PhantomJSReference.create().build());
 	ex.start();
 	ex.execute("var system = require('system');");
-    	System.out.println(ex.execute("system.stdout.writeLine('TEST1');")); // This prints "TEST1"
-    	System.out.println( ex.execute("system.stdout.writeLine('TEST2');")); // This prints "TEST2"
+    	System.out.println(ex.execute("system.stdout.writeLine('TEST1');", "true")); // This prints "TEST1"
+    	System.out.println( ex.execute("system.stdout.writeLine('TEST2');", "true")); // This prints "TEST2"
     	ex.destroy();
     
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/Jarlakxen/embedphantomjs/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
