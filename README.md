@@ -18,65 +18,68 @@ Stable [OSS Sonatype](https://oss.sonatype.org/content/repositories/releases/com
 	<dependency>
 		<groupId>com.github.jarlakxen</groupId>
 		<artifactId>embedphantomjs</artifactId>
-		<version>2.9</version>
+		<version>3.0</version>
 	</dependency>
 ```
 ### Changelog
 
-2.9
-- https://github.com/Jarlakxen/embedphantomjs/pull/3
-- Update dependancies
-- Sopport for versions last versions of PhantomJS
-- Move PhantomJS download url to bitbucket.
+- 3.0
+    - Move to Java 8
+    - Remove Guava dependancy, switch to `CompletableFuture`
 
-2.8
-- Better windows support ( Thanks to @Dmitry-Shweikus )
+- 2.9
+    - https://github.com/Jarlakxen/embedphantomjs/pull/3
+    - Update dependancies
+    - Sopport for versions last versions of PhantomJS
+    - Move PhantomJS download url to bitbucket.
 
-2.7
-- Unify Sync and Async interfaces for PhantomJSFileExecutor
-- Improve error handling
+- 2.8
+    - Better windows support ( Thanks to @Dmitry-Shweikus )
 
-2.6
-- Some API improvments in PhantomJSFileExecutor
-- Improve the core of the PhantomJSConsoleExecutor
+- 2.7
+    - Unify Sync and Async interfaces for PhantomJSFileExecutor
+    - Improve error handling
 
-2.5
-- Some API improvments
+- 2.6
+    - Some API improvments in PhantomJSFileExecutor
+    - Improve the core of the PhantomJSConsoleExecutor
 
-2.4
-- Provide some basic information of the PhantomJS process
-- Better exception handling
+- 2.5
+    - Some API improvments
 
-2.3
-- Bug fixing
+- 2.4
+    - Provide some basic information of the PhantomJS process
+    - Better exception handling
 
-2.2 
-- Mejor API Refactor
-- Now supports console style executor
+- 2.3
+    - Bug fixing
 
-2.1 
-- Add asyncronic execution
+- 2.2
+    - Mejor API Refactor
+    - Now supports console style executor
 
-2.0 
-- Sopport for versions 1.9.2, 1.9.1, 1.9.0, 1.8.2, 1.8.1, 1.8.0
-- Sopport binary versioned
+- 2.1
+    - Add asyncronic execution
 
-1.3
-- Full support for input stream script
+- 2.0
+    - Sopport for versions 1.9.2, 1.9.1, 1.9.0, 1.8.2, 1.8.1, 1.8.0
+    - Sopport binary versioned
 
-1.2
+- 1.3
+    - Full support for input stream script
 
-- Bug fixing
+- 1.2
+    - Bug fixing
 
-1.1
-- Bug fixing
+- 1.1
+    - Bug fixing
 
-1.0
-- Auto-detect OS
-- Auto-detect architecture
-- Sopport for versions 1.7.0, 1.6.1, 1.6.0, 1.5.0, 1.4.1, 1.4.0, 1.3.0
-- Check native installation
-- Download from page
+- 1.0
+    - Auto-detect OS
+    - Auto-detect architecture
+    - Sopport for versions 1.7.0, 1.6.1, 1.6.0, 1.5.0, 1.4.1, 1.4.0, 1.3.0
+    - Check native installation
+    - Download from page
 
 
 
@@ -108,5 +111,5 @@ Support for Linux, Windows and MacOSX.
     	System.out.println(ex.execute("system.stdout.writeLine('TEST1');", "true")); // This prints "TEST1"
     	System.out.println( ex.execute("system.stdout.writeLine('TEST2');", "true")); // This prints "TEST2"
     	ex.destroy();
-    
+
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/Jarlakxen/embedphantomjs/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
