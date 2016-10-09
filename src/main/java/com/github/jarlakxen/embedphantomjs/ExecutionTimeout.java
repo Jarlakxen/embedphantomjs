@@ -1,6 +1,6 @@
 /**
  * Copyright (C) 2013
- *   Facundo Viale <fviale@despegar.com>
+ *   Facundo Viale
  *
  * with contributions from
  * 	Facundo Viale (Jarlakxen@github)

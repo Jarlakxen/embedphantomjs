@@ -1,5 +1,5 @@
 Copyright (C) ${lic.year} 
-  ${lic.username} <${lic.email}>
+  ${lic.username}
   
 with contributions from
 	${lic.developers}
