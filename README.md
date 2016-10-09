@@ -24,7 +24,7 @@ Stable [OSS Sonatype](https://oss.sonatype.org/content/repositories/releases/com
 ### Changelog
 
 2.9
-- #3
+- Jarlakxen/embedphantomjs#3
 - Update dependancies
 - Sopport for versions last versions of PhantomJS
 - Move PhantomJS download url to bitbucket.
